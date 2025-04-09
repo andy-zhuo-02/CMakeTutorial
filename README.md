@@ -72,6 +72,37 @@ cmake .. -DBUILD_SHARED_LIBRARY=ON
 cmake --build .
 ```
 
+## 编码考虑
+
+本项目代码默认使用英文避免编码问题，但如果您想在项目中使用非ASCII字符（如中文），请注意以下事项：
+
+1. **源文件编码**：
+   - 确保所有源文件使用UTF-8编码保存
+   - 在大多数现代编辑器中，这是默认设置
+
+2. **编译器选项**：
+   - 对于MSVC编译器，可在CMakeLists.txt中添加以下选项支持UTF-8：
+     ```cmake
+     if(MSVC)
+       add_compile_options(/utf-8)
+     endif()
+     ```
+   - 对于GCC/Clang，可添加：
+     ```cmake
+     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+       add_compile_options(-finput-charset=UTF-8)
+     endif()
+     ```
+
+3. **控制台输出**：
+   - Windows平台下可能需要设置控制台代码页以正确显示非ASCII字符：
+     ```cpp
+     #ifdef _WIN32
+     #include <windows.h>
+     SetConsoleOutputCP(CP_UTF8);
+     #endif
+     ```
+
 ## 学习建议
 
 1. 按照示例顺序学习，每个示例都基于前面示例的知识

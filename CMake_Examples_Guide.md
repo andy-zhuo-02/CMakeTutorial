@@ -547,7 +547,322 @@ endif()
 
 ## 示例3：子目录与项目结构
 
-详细解析将在后续添加...
+### 目录结构
+
+```
+03_subdirectories/
+├── CMakeLists.txt        # 顶层CMake构建脚本
+├── app/
+│   ├── CMakeLists.txt    # app子目录的CMake构建脚本
+│   └── main.cpp          # 主程序源文件
+└── lib/
+    ├── CMakeLists.txt    # lib子目录的CMake构建脚本
+    ├── include/
+    │   └── calculator.h  # 计算器类的头文件
+    └── src/
+        └── calculator.cpp # 计算器类的实现
+```
+
+这个示例展示了一个更加复杂的项目结构，它包含多个子目录，每个子目录都有自己的CMakeLists.txt文件。这种结构适合于有明确模块划分的大型项目。
+
+### 源代码解析
+
+**lib/include/calculator.h**:
+
+```cpp
+#ifndef CALCULATOR_H
+#define CALCULATOR_H
+
+class Calculator {
+public:
+    double add(double a, double b);
+    double subtract(double a, double b);
+    double multiply(double a, double b);
+    double divide(double a, double b);
+};
+
+#endif // CALCULATOR_H
+```
+
+定义了一个简单的`Calculator`类，包含四个基本算术运算的方法。
+
+**lib/src/calculator.cpp**:
+
+```cpp
+#include "calculator.h"
+
+double Calculator::add(double a, double b) {
+    return a + b;
+}
+
+double Calculator::subtract(double a, double b) {
+    return a - b;
+}
+
+double Calculator::multiply(double a, double b) {
+    return a * b;
+}
+
+double Calculator::divide(double a, double b) {
+    return a / b;
+}
+```
+
+实现了`Calculator`类中声明的四个算术运算方法。
+
+**app/main.cpp**:
+
+```cpp
+#include <iostream>
+#include "calculator.h"
+
+int main() {
+    Calculator calc;
+    
+    double a = 10.5, b = 5.2;
+    
+    std::cout << "计算器示例：" << std::endl;
+    std::cout << a << " + " << b << " = " << calc.add(a, b) << std::endl;
+    std::cout << a << " - " << b << " = " << calc.subtract(a, b) << std::endl;
+    std::cout << a << " * " << b << " = " << calc.multiply(a, b) << std::endl;
+    std::cout << a << " / " << b << " = " << calc.divide(a, b) << std::endl;
+    
+    return 0;
+}
+```
+
+这是主程序，创建`Calculator`对象并演示其功能。
+
+### CMakeLists.txt 详解
+
+**顶层 CMakeLists.txt**:
+
+```cmake
+cmake_minimum_required(VERSION 3.10)
+project(SubdirExample VERSION 1.0.0 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# 添加子目录
+add_subdirectory(lib)
+add_subdirectory(app)
+
+# 演示如何增加选项
+option(BUILD_DOCS "构建文档" OFF)
+
+if(BUILD_DOCS)
+    message(STATUS "将生成文档")
+    # 这里可以添加文档生成的相关命令
+endif()
+```
+
+**lib/CMakeLists.txt**:
+
+```cmake
+# 创建库
+add_library(calculator
+    src/calculator.cpp
+)
+
+# 为库指定包含目录
+target_include_directories(calculator
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+```
+
+**app/CMakeLists.txt**:
+
+```cmake
+# 创建可执行文件
+add_executable(calc_app main.cpp)
+
+# 链接库
+target_link_libraries(calc_app
+    PRIVATE
+        calculator
+)
+```
+
+#### 命令详解：
+
+1. **add_subdirectory(lib)**
+   - **作用**：将子目录添加到构建中
+   - **过程**：CMake会处理该子目录中的CMakeLists.txt文件
+   - **执行顺序**：先处理顶层CMakeLists.txt中`add_subdirectory`之前的命令，然后处理子目录的CMakeLists.txt，最后回到顶层继续处理
+   - **参数**：
+     - `lib`：子目录的路径（相对于当前CMakeLists.txt所在目录）
+     - 可选的第二个参数：指定子目录的构建输出目录
+     - 可选的`EXCLUDE_FROM_ALL`参数：表示子目录中的目标默认不会被构建，除非显式指定
+
+2. **变量作用域**：
+   - 顶层CMakeLists.txt中设置的变量（如`CMAKE_CXX_STANDARD`）会被子目录继承
+   - 子目录中设置的变量默认不会传递给父目录
+   - 子目录中可以通过`set(变量名 值 PARENT_SCOPE)`将变量值传递给父目录
+
+3. **目标可见性**：
+   - 在子目录中定义的目标（如`calculator`库）在其他子目录中可见
+   - 这使得`app`子目录可以直接使用`lib`子目录中定义的`calculator`库
+   - 无需使用`PUBLIC/PRIVATE/INTERFACE`修饰符来控制目标的可见性
+
+### 多目录项目的组织策略
+
+#### 1. 按功能模块划分
+
+将代码按照功能模块划分到不同目录：
+
+```
+project/
+├── CMakeLists.txt
+├── module1/
+│   ├── CMakeLists.txt
+│   ├── include/
+│   └── src/
+├── module2/
+│   ├── CMakeLists.txt
+│   ├── include/
+│   └── src/
+└── app/
+    ├── CMakeLists.txt
+    └── src/
+```
+
+#### 2. 按代码类型划分
+
+将代码按类型（库、可执行文件、测试等）划分：
+
+```
+project/
+├── CMakeLists.txt
+├── libs/
+│   ├── CMakeLists.txt
+│   ├── lib1/
+│   └── lib2/
+├── apps/
+│   ├── CMakeLists.txt
+│   ├── app1/
+│   └── app2/
+└── tests/
+    ├── CMakeLists.txt
+    └── ...
+```
+
+#### 3. 按层次结构划分
+
+将代码按照依赖层次划分：
+
+```
+project/
+├── CMakeLists.txt
+├── base/          # 基础层，不依赖其他模块
+│   ├── CMakeLists.txt
+│   └── ...
+├── common/        # 通用层，依赖基础层
+│   ├── CMakeLists.txt
+│   └── ...
+└── features/      # 功能层，依赖基础层和通用层
+    ├── CMakeLists.txt
+    └── ...
+```
+
+### 构建和运行过程
+
+1. **创建构建目录**：
+   ```bash
+   mkdir -p 03_subdirectories/build
+   cd 03_subdirectories/build
+   ```
+
+2. **配置项目**：
+   ```bash
+   cmake ..
+   ```
+
+3. **构建项目**：
+   ```bash
+   cmake --build .
+   ```
+
+4. **运行程序**：
+   ```bash
+   ./app/calc_app  # Linux/macOS
+   .\app\calc_app.exe  # Windows
+   ```
+
+### 多子目录项目的优点
+
+1. **模块化**：
+   - 将代码分解为功能明确的模块
+   - 每个模块有自己的CMakeLists.txt，可独立配置
+
+2. **可重用性**：
+   - 模块可以被多个项目或应用程序重用
+   - 可以将常用模块打包为独立库
+
+3. **依赖管理**：
+   - 清晰表达模块间的依赖关系
+   - 避免意外引入不必要的依赖
+
+4. **并行开发**：
+   - 多人开发时可以并行处理不同模块
+   - 减少代码合并冲突
+
+5. **选择性构建**：
+   - 可以选择性地构建特定模块或组件
+   - 使用`BUILD_模块名`类型的选项控制是否构建某个模块
+
+### 常见问题和解决方案
+
+1. **找不到子目录中定义的目标**：
+   - **问题**：一个子目录无法找到另一个子目录中定义的目标
+   - **解决方案**：
+     - 确保目标所在的子目录已通过`add_subdirectory`添加
+     - 检查子目录的添加顺序（被依赖的子目录应该先添加）
+     - 使用`target_link_libraries`显式声明依赖关系
+
+2. **重复定义变量**：
+   - **问题**：子目录中重新定义了父目录中的变量，导致行为不一致
+   - **解决方案**：
+     - 使用条件检查避免重复设置：`if(NOT DEFINED 变量名)`
+     - 使用更特定的变量名，加入模块前缀
+     - 对于需要覆盖的变量，使用`CACHE`变量并设置`FORCE`选项
+
+3. **构建产物位置不明确**：
+   - **问题**：不清楚构建后的库和可执行文件位于何处
+   - **解决方案**：
+     - 使用`set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)`统一可执行文件输出位置
+     - 使用`set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)`统一库文件输出位置
+     - 使用`message()`命令输出关键路径信息
+
+4. **多级子目录的包含路径问题**：
+   - **问题**：深层子目录中的代码无法找到顶层或其他子目录中的头文件
+   - **解决方案**：
+     - 在顶层CMakeLists.txt中设置全局包含目录
+     - 使用`PUBLIC`修饰符正确传递包含目录
+     - 使用相对路径的包含语句：`#include "module/header.h"`而非`#include "header.h"`
+
+### 最佳实践
+
+1. **保持每个子目录的CMakeLists.txt简洁**：
+   - 每个CMakeLists.txt关注自己的功能，不处理不相关的事情
+   - 将公共设置放在顶层CMakeLists.txt中
+
+2. **使用变量避免硬编码路径**：
+   - 使用`${CMAKE_CURRENT_SOURCE_DIR}`指代当前目录
+   - 使用`${CMAKE_CURRENT_BINARY_DIR}`指代当前构建目录
+
+3. **不要在子目录中修改全局设置**：
+   - 避免在子目录中修改`CMAKE_CXX_FLAGS`等全局变量
+   - 使用`target_compile_options`等目标特定命令
+
+4. **控制目标和变量的可见性**：
+   - 合理使用`PUBLIC/PRIVATE/INTERFACE`修饰符
+   - 使用`PARENT_SCOPE`明确表达变量传递的意图
+
+5. **按照依赖关系顺序添加子目录**：
+   - 被依赖的子目录应该先被添加
+   - 例如：如果`app`依赖`lib`，则应先添加`lib`再添加`app`
 
 ## 示例4：选项、安装与测试
 
