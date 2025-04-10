@@ -15,7 +15,7 @@ cmake_learning/
 ├── 05_find_package/              # 示例5：查找和使用第三方库
 ├── 06_advanced/                  # 示例6：生成器表达式和自定义命令
 ├── CMake_Examples_Guide.md       # 详细的示例解析文档
-├── cmakeLearning.md              # CMake学习计划
+├── CMake_Learning_Schedule.md    # CMake学习计划
 ├── .gitignore                    # Git忽略文件配置
 └── README.md                     # 本文件
 ```
@@ -114,7 +114,7 @@ cmake --build .
 ## 文档资源
 
 - **CMake_Examples_Guide.md**：详细的示例解析，包含命令说明、概念解释和最佳实践
-- **cmakeLearning.md**：完整的CMake学习计划，包含核心概念和学习资源
+- **CMake_Learning_Schedule.md**：完整的CMake学习计划，包含核心概念和学习资源
 
 ## 贡献
 
